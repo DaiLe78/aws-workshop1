@@ -1,16 +1,16 @@
 ---
-title : "Create security groups"
+title : "Create Security Groups"
 date : "`r Sys.Date()`"
-weight : 4
+weight : 3
 chapter : false
-pre : " <b> 2.1.4 </b> "
+pre : " <b> 2.1.3 </b> "
 ---
 
-#### Create security groups
+#### Create Security Groups
 
-In this step, we will proceed to create the security groups used for our instances. As you can see, these security groups will not need to open traditional ports to **ssh** like port **22** or **remote desktop** through port **3389**.
+In this step, we will proceed to create the security groups used for our Lambda functions and VPC Endpoints.
 
-#### Create security group for Linux instance located in public subnet
+#### Create security group for Lambda 1 located in private subnet
 
 1. Go to [VPC service management console](https://console.aws.amazon.com/vpc)
   + Click **Security Group**.
@@ -18,64 +18,81 @@ In this step, we will proceed to create the security groups used for our instanc
 
 ![SG](/images/2.prerequisite/019-createsg.png)
 
-3. In the **Security group name** field, enter **SG Public Linux Instance**.
-  + In the **Description** section, enter **SG Public Linux Instance**.
+3. In the **Security group name** field, enter **SG Lambda1**.
+  + In the **Description** section, enter **sg for lambda1**.
   + In the **VPC** section, click the **X** to reselect the **Lab VPC** you created for this lab.
 
-![SG](/images/2.prerequisite/020-createsg.png)
+![SG](/images/2.prerequisite/lambda-01.png)
 
-4. Keep **Outbound rule**, drag the mouse to the bottom.
+4. Keep **Inbound rule** blank, **Outbound rule** allows **All traffic**.
+
+![SG](/images/2.prerequisite/lambda-02.png)
+
+5. Drag the mouse to the bottom.
   + Click **Create security group**.
 
+#### Create security group for Lambda 2 located in private subnet
+
 {{%notice tip%}}
-As you can see, the security group we created to use for Linux public instances will not need to open traditional ports to **ssh** like port **22**.
+We configure the same as lambda 1 but now leave both the inbound and outbound rule blank. We will add these rules later!
 {{%/notice%}}
 
+#### Create a security group for VPC Endpoint for SNS
 
-#### Create a security group for a Windows instance located in a private subnet
-
-1. After successfully creating a security group for the Linux instance located in the public subnet, click the Security Groups link to return to the Security groups list.
-
-![SG](/images/2.prerequisite/021-createsg.png)
+1. After successfully creating a security group for Lambda functions, click the Security Groups link to return to the Security groups list.
 
 2. Click **Create security group**.
 
-3. In the **Security group name** field, enter **SG Private Windows Instance**.
-  + In the **Description** section, enter **SG Private Windows Instance**.
+3. In the **Security group name** field, enter **SG VPC Endpoint For SNS**.
+  + In the **Description** section, enter **sg vpc endpoint for sns**.
   + In the **VPC** section, click the **X** to reselect the **Lab VPC** you created for this lab.
 
-![SG](/images/2.prerequisite/022-createsg.png)
+![SG](/images/2.prerequisite/SG-VPCE-SNS-01.png)
 
 4. Scroll down.
-  + Add **Outbound rule** to allow TCP 443 connection to 10.10.0.0/16 ( CIDR of **Lab VPC** we created)
+  + Add **Inbound rule** for **Type**: All traffic, **Protocol** and **Port range**: All, **Source**: SG Lambda 2 
+  + Add **Outbound rule** and keep as blank.
   + Click **Create security group**.
 
-![SG](/images/2.prerequisite/023-createsg.png)
-
-{{%notice tip%}}
-For the Instance in the private subnet, we will connect to the **Session Manager** endpoint over a TLS encrypted connection, so we need to allow outbound connection from our instance to VPC CIDR through port 443.
-{{%/notice%}}
+![SG](/images/2.prerequisite/SG-VPCE-SNS-02.png)
 
 
-#### Create security group for VPC Endpoint
+#### Create a security group for VPC Endpoint for DynamoDB
 
-1. In this step, we will create security group for VPC Endpoint of **Session Manager**.
-2. After successfully creating the security group for the Windows instance in the private subnet, click the Security Groups link to return to the Security groups list.
-3. Click **Create security group**.
-4. In the **Security group name** field, enter **SG VPC Endpoint**.
-  + In the **Description** section, enter **SG VPC Endpoint**.
+1. After successfully creating a security group for VPC Endpoint for SNS, click the Security Groups link to return to the Security groups list.
+
+2. Click **Create security group**.
+
+3. In the **Security group name** field, enter **SG VPC Endpoint For DynamoDB**.
+  + In the **Description** section, enter **sg vpc endpoint for dynamodb**.
   + In the **VPC** section, click the **X** to reselect the **Lab VPC** you created for this lab.
 
-![SG](/images/2.prerequisite/024-createsg.png)
+![SG](/images/2.prerequisite/SG-VPCE-DynamoDB-01.png)
 
-5. Scroll down.
-  + Delete **Outbound rule**.
-  
-![SG](/images/2.prerequisite/025-createsg.png)
-
-6. Add **Inbound rule** allowing TCP 443 to come from 10.10.0.0/16 ( CIDR of **Lab VPC** we created ).
+4. Scroll down.
+  + Add **Inbound rule** for **Type**: All traffic, **Protocol** and **Port range**: All, **Source**: SG Lambda 1 
+  + Keep **Outbound rules** as blank.
   + Click **Create security group**.
 
-![SG](/images/2.prerequisite/026-createsg.png)
+![SG](/images/2.prerequisite/SG-VPCE-DynamoDB-02.png)
 
-So we are done creating the necessary security groups for EC2 instances and VPC Endpoints.
+
+#### Create security group for VPC Endpoint for CloudWatch
+
+{{%notice tip%}}
+We configure the same as security group for VPC Endpoint for DynamoDB : Inbound rules: SG Lambda 1 and leave Outbound rules as blank.
+{{%/notice%}}
+
+#### Update security group for Lambda 2
+
+Now we update **Outbound rules** for **Type**: All traffic, **Protocol** and **Port range**: All, **Source**: SG VPC Endpoint For SNS.
+
+![SG](/images/2.prerequisite/lambda-03.png)
+
+{{%notice tip%}}
+We must ensure enable **DNS hostname** and **DNS Resolution** in the **VPC Settings** so that the VPC support DNS host name when use VPC Endpoints!
+{{%/notice%}}
+
+![SG](/images/2.prerequisite/Edit-VPC.png)
+
+So we are done creating the necessary security groups for Lambda functions and VPC Endpoints.
